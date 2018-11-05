@@ -452,89 +452,73 @@ void TC5_Handler (void) {
 // this is eather ambiant or active rain        //Alter timing as nessisary currently assuming one cycle = 1ms
 byte rainDropState[16];
 byte rainShineState[16];
-byte rainDropSize[16];
-byte rainShineSize[16];
+byte rainDropVolume[16];
+byte rainShineVolume[16];
 void rainCycle(uint8_t wait) {
   uint16_t i;
   
 
 
   for(i = 0; i < 16; i++){
-    Rain((rainDropState + i), (rainShineState + i), (rainDropSize + i), (rainShineSize + i)); 
+    Rain((rainDropState + i), (rainShineState + i), (rainDropVolume + i), (rainShineVolume + i)); 
   }
-  //if this is a neopixal with white
+  
   for(i = 0; i < 16; i++){
-    strip.setPixelColor(i, strip.Color(0, 0, *(rainDropSize + i) - *(rainShineSize + i), *(rainShineSize + i)));
+    strip.setPixelColor(i, strip.Color(0, 0, *(rainDropVolume + i), *(rainShineVolume + i)));
   }
-  /*if this is a neopixal without white
-  for(i = 0; i < 16; i++){
-    strip.setPixelColor(i, strip.Color(*(rainShineSize + i), *(rainShineSize + i), *(rainDropSize + i)));
-  } 
-  */
   
   strip.show();
   delay(wait);
 }
 
-void Rain(byte* a1, byte* b1, byte* t1, byte* w1) {
-  int spRate = 2;
-  if((*a1 != 0) || (*a1 != 1) || (*a1 != 2)){
-    *a1 = 0;
+void Rain(byte* rds, byte* rss, byte* rdv, byte* rsv) {
+  uint16_t i;
+  
+  if(*rds == 0){
+    if(random(16) <= 1){
+      *rds = 1;
+    }
   }
-  if((*b1 != 0) || (*b1 != 1) || (*b1 != 2)){
-    *b1 = 0;
-  }
-  if((*t1 < 0) || (*t1 > 255)){
-    *t1 = 0;
-  }
-  if((*w1 < 0)  || (*w1 > 255)){
-    *w1 = 0;
+
+  if(*rds == 1){
+    i = random(250);
+    if((i + *rdv) >= 250){
+      *rdv = 250; 
+      *rds = 2;
+      *rss = 1;
+    }else{
+      *rdv = *rdv + i;
+    }
+  }else if(*rds == 2){
+    i = random(100);
+    if((*rdv - i) <= 0){
+      *rdv = 0; 
+      *rds = 0;
+    }else{
+      *rdv = *rdv - i;
+    }
+
+    if(*rss == 1){
+      i = random(500);
+      if((i + *rsv) >= 250){
+        *rsv = 250; 
+        *rss = 2;
+      }else{
+        *rsv = *rsv + i;
+      }
+    }else if(*rss == 2){
+      i = random(250);
+      if((*rsv - i) <= 0){
+        *rsv = 0; 
+        *rss = 0;
+      }else{
+        *rsv = *rsv - i;
+      }
+    }
   }
   
-  if (*a1 == 0){
-    if(random(500) < 100 * spRate){
-      *a1 = 1;
-      *t1 = 0;
-    }
-  }else{
-    if(*a1 == 1){
-      if(random(400) < 100 * spRate){
-        *t1 = *t1 + 1;
-        if(*t1 > 250){
-          *a1 = 2;
-          *b1 = 1;
-          *w1 = 0;
-        }
-      }
-        
-    }else if(*a1 == 2){
-      if(random(3200) < 100 * spRate){
-        *t1 = *t1 - 1;
-        if(*b1 == 1){
-          if(random(400) < 100 * spRate){
-            *w1 = *w1 + 1;
-            if(*w1 > *t1){
-              *b1 = 2;
-            }
-          }
-        }else if(*b1 == 2){
-          if(random(800) <= 100 * spRate){
-            *w1 = *w1 - 1;
-            if(*w1 < 2){
-              *b1 = 0;
-            }
-          }
-        }
-        if(*t1 < 2){
-          *t1 = 0;
-          *a1 = 0;
-          *b1 = 0;
-          *w1 = 0;
-        }
-      }
-    }
-  }
 }
+
 
 //
 //
@@ -542,18 +526,25 @@ void Rain(byte* a1, byte* b1, byte* t1, byte* w1) {
 // this is a startle code
 void crazed(uint8_t wait){
   uint16_t i;
-  uint8_t R, G;
+  uint8_t R, G, B;
 
 
   for(i = 0; i < 16; i++){
-    if(random(500) <= 200){
+    if(random(5) < 2){
       R = 255;
-      G = random(100);
+      if(random(5) < 2){
+        B = 255
+        G = 255
+      }else{
+        B = 0;
+        G = random(100);
+      }
     }else{
       R = 0;
       G = 0;
+      B = 0;
     }
-    strip.setPixelColor(i, strip.Color(R, G, 0));
+    strip.setPixelColor(i, strip.Color(R, G, B));
   }
   strip.show();
   delay(wait);
@@ -565,43 +556,48 @@ void crazed(uint8_t wait){
 // this is a 2nd ambiant/active code
 void randomspiral(uint8_t wait){
   uint16_t i, j;
-  static byte R = 100, G = 100, B = 100;
+  static byte R = 100, G = 100, B = 100, R2 = 100, G2 = 100, B2 = 100;
   byte a;
   
-  a = random(10);
-  if(R > 10){
-    R = R - a;
+  if(R > 40){
+    R = R - random(40);
   }
-  a = random(10);
-  if(R < 245){
-    R = R + a;
-  }
-
-  a = random(10);
-  if(G > 10){
-    G = G - a;
-  }
-  a = random(10);
-  if(G < 245){
-    G = G + a;
+  
+  if(R < 215){
+    R = R + random(40);
   }
 
-  a = random(10);
-  if(B > 10){
-    B = B - a;
+  if(G > 40){
+    G = G - random(40);
   }
-  a = random(10);
-  if(B < 245){
-    B = B + a;
+  
+  if(G < 215){
+    G = G + random(40);
+  }
+
+  if(B > 40){
+    B = B - random(40);
+  }
+  
+  if(B < 215){
+    B = B + random(40);
   }
 
   for(i = 0; i < 16; i++){
     for(j = 0; j < 16; j++){
-      strip.setPixelColor(i, strip.Color((R * j / 15), (G * j / 15), (B * j / 15)));
+      a = (j + i) % 16;
+      if((j + i) < 16){
+        strip.setPixelColor(a, strip.Color((R * a / 15), (G * a / 15), (B * a / 15)));
+      }else{
+        strip.setPixelColor(a, strip.Color((R2 * a / 15), (G2 * a / 15), (B2 * a / 15)));
+      }
     }
     strip.show();
     delay(wait);
   }
+  R2 = R;
+  G2 = G;
+  B2 = B;
 }
 
 //
@@ -612,9 +608,9 @@ void alternate(uint8_t wait){
   uint16_t i, j;
   byte a = 0, b = 0;
   
-  byte g = 0, PratioR = 0, PratioG = 0, PratioB = 0;
-  //for random colors instead of white set g to 1;
-  if(g == 1){
+  byte C = 0, PratioR, PratioG, PratioB;
+  //for random colors instead of white set C to 1;
+  if(C == 1){
     PratioR = random(1, 10);
     PratioG = random(1, 10);
     PratioB = random(1, 10);
@@ -625,23 +621,23 @@ void alternate(uint8_t wait){
   }
   
 
-  for(i = 0; i < 25; i++){
-    a = a + 10;
+  for(i = 0; i < 26; i++){
     b = 250 - a;
     for(j = 0; j < 8; j++){
-      strip.setPixelColor(j, strip.Color(a / PratioR, a / PratioG, a / PratioB));
-      strip.setPixelColor(j + 1, strip.Color(b / PratioR, b / PratioG, b / PratioB));
+      strip.setPixelColor((j * 2), strip.Color(a / PratioR, a / PratioG, a / PratioB));
+      strip.setPixelColor((j * 2) + 1, strip.Color(b / PratioR, b / PratioG, b / PratioB));
     }
     strip.show();
     delay(wait);
+    a = a + 10;
   }
 
-  for(i = 0; i < 25; i++){
-    a = a + 10;
+  for(i = 0; i < 26; i++){
+    a = a - 10;
     b = 250 - a;
     for(j = 0; j < 8; j++){
-      strip.setPixelColor(j, strip.Color(b / PratioR, b / PratioG, b / PratioB));
-      strip.setPixelColor(j + 1, strip.Color(a / PratioR, a / PratioG, a / PratioB));
+      strip.setPixelColor((j * 2) + 1, strip.Color(a / PratioR, a / PratioG, a / PratioB));
+      strip.setPixelColor((j * 2), strip.Color(b / PratioR, b / PratioG, b / PratioB));
     }
     strip.show();
     delay(wait);
