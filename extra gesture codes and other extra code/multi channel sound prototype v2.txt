@@ -1,0 +1,86 @@
+bool isLEDOn = false;
+bool playFlag = false;
+bool gestFlag = false;
+bool noteFlag[16];
+uint16_t noteNum = 64;
+uint16_t gNum = 255;
+uint16_t gCnt[16];
+uint16_t noteCnt = 7;
+uint16_t noteLength = 50;
+uint16_t duration[16];
+uint16_t tempo = 8;
+uint16_t volume = 127;
+uint16_t ledcount = 0;
+
+/*uint8_t gesture[gesture #][track #][track data] = {
+	{
+	{#oftracks, instrament#, #ofNotes,
+	volume, note#, duration,
+	volume, note#, duration},
+	{#oftracks, instrament#, #ofNotes,
+	volume, note#, duration,
+	volume, note#, duration}
+	},
+	{
+	{#oftracks, instrament#, #ofNotes,
+	volume, note#, duration,
+	volume, note#, duration},
+	{#oftracks, instrament#, #ofNotes,
+	volume, note#, duration,
+	volume, note#, duration}
+	},
+    };
+
+
+//this function gets called by the interrupt at <sampleRate>Hertz
+void TC5_Handler (void) {
+    byte aa;
+    if(playFlag){
+      if(!gestFlag){
+        // start Gesture
+        gestFlag = true;
+	for(aa = 0; aa < gesture[gNum][0][0]; aa++){
+	  midiSetInstrument(aa, gesture[gNum][aa][1]);
+	}
+        //set Voice
+        for(aa = 0; aa < gesture[gNum][0][0]; aa++){
+	  *(gCnt + aa) = 3;
+	}
+        //set notecnt
+        noteCnt = gesture[gNum][0][2];
+        
+      }
+      for(aa = 0; aa < gesture[gNum][0][0]; aa++){
+        if(!(*(noteFlag + aa))){
+          //set volume
+          volume = gesture[gNum][aa][gCnt[aa]++];
+          //set noteNum
+          noteNum = gesture[gNum][aa][gCnt[aa]++];
+          //set duration
+          duration[aa] = gesture[gNum][aa][gCnt[aa]++]-tempo;
+
+          //start note
+          midiNoteOn(aa, noteNum, volume);
+          noteFlag[aa] = true;
+          digitalWrite(LED_PIN, isLEDOn);
+          isLEDOn = !isLEDOn;
+        }
+      }
+      for(aa = 0; aa < gesture[gNum][0][0]; aa++){
+        duration[aa] -= 1;
+        if(duration[aa]==0){
+          if(aa == 0){
+	    noteCnt -= 1;
+	  }
+          if(noteCnt==0){
+            //clear all flags
+            playFlag = false;
+            gestFlag = false;
+          }
+          noteFlag[aa] = false;
+        }
+      }
+      
+    }  // END OF YOUR CODE
+  TC5->COUNT16.INTFLAG.bit.MC0 = 1; //don't change this, it's part of the timer code
+}
