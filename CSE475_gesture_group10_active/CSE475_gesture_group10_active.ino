@@ -199,7 +199,7 @@ void loop() {
     interrupts();
   }
   // other code here
-  crazed(1);
+  orangeQuad(1);
      
 }
   void SendPacket() {
@@ -430,7 +430,7 @@ void TC5_Handler (void) {
 //
 //
 // this is a startle code
-void crazed(uint8_t wait){
+void orangeQuad(uint8_t wait){
   uint16_t i;
   uint8_t R, G, B;
 
