@@ -74,28 +74,10 @@ Adafruit_FeatherOLED oled = Adafruit_FeatherOLED();
 uint8_t voice[] = {
     7,9,10,12,15,47,105,99,113,114,115,116,118,124 };
 
-uint8_t gesture[7][26] = {
-    {123,4, // seashore - ambient (instrument, num notes)
-      120,64,255,  50,64,50,  25,64,50,  10,64,50,  // vol, note, dur
-      0,64,50,  0,64,50,  0,64,50,  0,64,50         },  
-    {124,8, // bird chirp 1 
-      120,84,50,  120,96,50,  120,90,50,  0,70,50,  
-      0,72,50,  0,74,50,  0,76,50,  0,78,50         }, 
-    {124,8,  // bird chirp 2 
+uint8_t gesture[1][26] = {
+    {124,8,  // bird chirp  - active
       120,94,50,  120,94,50,  120,94,50, 120,88,50,  
-      120,90,50,  120,96,50,  120,90,50,  0,76,50   },
-    {11,8,   // music box chime - active
-      120,96,50,  120,92,50,  120,94,50, 120,98,50,  
-      120,96,50,  0,96,50,  0,90,50,  0,76,50       },
-    {80,7,   // ocarina - active
-      120,74,50,  120,71,50,  120,69,50,   1,74,50,    
-      120,74,50,  120,71,50,  120,69,50,  0,76,50   },
-    {47,8,   // harp - active
-      120,71,50,  120,69,50,  120,73,50, 120,76,50,   
-      0,74,50,  0,71,50,  0,69,50, 0,74,50          },
-    {127,4,   // heavy rain?? via applause
-      120,64,255,  50,64,50,  25,64,50,  10,64,50,   
-      0,74,50,      0,71,50,    0,69,50,  0,74,50   },
+      120,90,50,  120,96,50,  120,90,50,  0,76,50   }
 };
 
 Adafruit_NeoPixel_ZeroDMA strip(PIXEL_COUNT, PIXEL_PIN, NEO_GRBW);
@@ -204,7 +186,7 @@ void loop() {
   //handle sound
   if (!playFlag) {
     //set Gesture 0-15
-    if(++gNum >6) gNum = 0;
+    if(++gNum >0) gNum = 0;
    // set voice 0-14
    midiSetInstrument(0, gesture[gNum][0]);
    Serial.println(gesture[gNum][0], DEC); 
@@ -217,7 +199,7 @@ void loop() {
     interrupts();
   }
   // other code here
-  rainCycle(1);
+  crazed(1);
      
 }
   void SendPacket() {
@@ -444,202 +426,56 @@ void TC5_Handler (void) {
   TC5->COUNT16.INTFLAG.bit.MC0 = 1; //don't change this, it's part of the timer code
 }
 
-
-//my demo code here
-//
-//
-//
-// this is eather ambiant or active rain        //Alter timing as nessisary currently assuming one cycle = 1ms
-byte rainDropState[16];
-byte rainShineState[16];
-byte rainDropVolume[16];
-byte rainShineVolume[16];
-void rainCycle(uint8_t wait) {
-  uint16_t i;
-  
-
-
-  for(i = 0; i < 16; i++){
-    Rain((rainDropState + i), (rainShineState + i), (rainDropVolume + i), (rainShineVolume + i)); 
-  }
-  
-  for(i = 0; i < 16; i++){
-    strip.setPixelColor(i, strip.Color(0, 0, *(rainDropVolume + i), *(rainShineVolume + i)));
-  }
-  
-  strip.show();
-  delay(wait);
-}
-
-void Rain(byte* rds, byte* rss, byte* rdv, byte* rsv) {
-  uint16_t i;
-  
-  if(*rds == 0){
-    if(random(16) <= 1){
-      *rds = 1;
-    }
-  }
-
-  if(*rds == 1){
-    i = random(250);
-    if((i + *rdv) >= 250){
-      *rdv = 250; 
-      *rds = 2;
-      *rss = 1;
-    }else{
-      *rdv = *rdv + i;
-    }
-  }else if(*rds == 2){
-    i = random(100);
-    if((*rdv - i) <= 0){
-      *rdv = 0; 
-      *rds = 0;
-    }else{
-      *rdv = *rdv - i;
-    }
-
-    if(*rss == 1){
-      i = random(500);
-      if((i + *rsv) >= 250){
-        *rsv = 250; 
-        *rss = 2;
-      }else{
-        *rsv = *rsv + i;
-      }
-    }else if(*rss == 2){
-      i = random(250);
-      if((*rsv - i) <= 0){
-        *rsv = 0; 
-        *rss = 0;
-      }else{
-        *rsv = *rsv - i;
-      }
-    }
-  }
-  
-}
-
-
-//
-//
-//
-// this is a startle code
+// Ambient 1 
 void crazed(uint8_t wait){
   uint16_t i;
   uint8_t R, G, B;
 
-
-  for(i = 0; i < 16; i++){
-    if(random(5) < 2){
-      R = 255;
-      if(random(5) < 2){
-        B = 255
-        G = 255
-      }else{
-        B = 0;
-        G = random(100);
-      }
-    }else{
-      R = 0;
-      G = 0;
-      B = 0;
+  uint8_t rand = random(4);
+  B = 0;
+  for(i = 0; i < 16; i++) {
+    switch (rand) {
+      case 0:
+        if (i >= 0 && i < 4) {
+          R = 255;
+          G = 165;
+        } else {
+          R = 0;
+          G = 0;
+        }
+        break;
+      case 1:
+        if (i >= 4 && i < 8) {
+          R = 255;
+          G = 165;
+        } else {
+          R = 0;
+          G = 0;
+        }
+        break;
+      case 2:
+        if (i >= 8 && i < 12) {
+          R = 255;
+          G = 165;
+        } else {
+          R = 0;
+          G = 0;
+        }
+        break;
+      case 3:
+        if (i >= 12 && i < 16) {
+          R = 255;
+          G = 165;
+        } else {
+          R = 0;
+          G = 0;
+        }
+        break;   
+      default:
+        break;
     }
     strip.setPixelColor(i, strip.Color(R, G, B));
   }
   strip.show();
   delay(wait);
-}
-
-//
-//
-//
-// this is a 2nd ambiant/active code
-void randomspiral(uint8_t wait){
-  uint16_t i, j;
-  static byte R = 100, G = 100, B = 100, R2 = 100, G2 = 100, B2 = 100;
-  byte a;
-  
-  if(R > 40){
-    R = R - random(40);
-  }
-  
-  if(R < 215){
-    R = R + random(40);
-  }
-
-  if(G > 40){
-    G = G - random(40);
-  }
-  
-  if(G < 215){
-    G = G + random(40);
-  }
-
-  if(B > 40){
-    B = B - random(40);
-  }
-  
-  if(B < 215){
-    B = B + random(40);
-  }
-
-  for(i = 0; i < 16; i++){
-    for(j = 0; j < 16; j++){
-      a = (j + i) % 16;
-      if((j + i) < 16){
-        strip.setPixelColor(a, strip.Color((R * a / 15), (G * a / 15), (B * a / 15)));
-      }else{
-        strip.setPixelColor(a, strip.Color((R2 * a / 15), (G2 * a / 15), (B2 * a / 15)));
-      }
-    }
-    strip.show();
-    delay(wait);
-  }
-  R2 = R;
-  G2 = G;
-  B2 = B;
-}
-
-//
-//
-//
-// this is a 3rd ambiant/active code
-void alternate(uint8_t wait){
-  uint16_t i, j;
-  byte a = 0, b = 0;
-  
-  byte C = 0, PratioR, PratioG, PratioB;
-  //for random colors instead of white set C to 1;
-  if(C == 1){
-    PratioR = random(1, 10);
-    PratioG = random(1, 10);
-    PratioB = random(1, 10);
-  }else{
-    PratioR = 1;
-    PratioG = 1;
-    PratioB = 1;
-  }
-  
-
-  for(i = 0; i < 26; i++){
-    b = 250 - a;
-    for(j = 0; j < 8; j++){
-      strip.setPixelColor((j * 2), strip.Color(a / PratioR, a / PratioG, a / PratioB));
-      strip.setPixelColor((j * 2) + 1, strip.Color(b / PratioR, b / PratioG, b / PratioB));
-    }
-    strip.show();
-    delay(wait);
-    a = a + 10;
-  }
-
-  for(i = 0; i < 26; i++){
-    a = a - 10;
-    b = 250 - a;
-    for(j = 0; j < 8; j++){
-      strip.setPixelColor((j * 2) + 1, strip.Color(a / PratioR, a / PratioG, a / PratioB));
-      strip.setPixelColor((j * 2), strip.Color(b / PratioR, b / PratioG, b / PratioB));
-    }
-    strip.show();
-    delay(wait);
-  }
 }
